@@ -1,4 +1,6 @@
 #include "Receiver.h"
+#include "Base64.h"
+
 
 #include <iostream>
 #include <cstdlib>
@@ -16,11 +18,11 @@ namespace fog {
 const string DFLT_SERVER_ADDRESS	{ "tcp://192.168.7.42:1883" };
 const string CLIENT_ID				{ "forwarder" };
 
-const string TOPIC { "CC" };
+const string TOPIC { "XX" };
 
-const int  QOS = 0;
+const int  QOS = 2;
 
-const auto TIMEOUT = std::chrono::milliseconds(10);
+const auto TIMEOUT = std::chrono::milliseconds(5);
 
 /////////////////////////////////////////////////////////////////////////////
 
@@ -120,7 +122,7 @@ void * Receiver::receive(void *n) {
 
 	auto connOpts = mqtt::connect_options_builder()
 		.clean_session()
-		.will(mqtt::message(TOPIC, "EXIT", QOS))
+//		.will(mqtt::message("connection", "EXIT", QOS))
 		.finalize();
 
 	cout << "  ...OK" << endl;
@@ -169,9 +171,13 @@ void * Receiver::receive(void *n) {
             try {
 		std::stringbuf *message = new std::stringbuf();
 		comm->serialize_coords(m,message);
-                mqtt::message_ptr pubmsg = mqtt::make_message(TOPIC, message->str().data(), message->str().length());
+		std::string payload = macaron::Base64::Encode(message->str());
+		//mqtt::message mess(TOPIC, payload.c_str(), payload.size(),QOS);
+                mqtt::message_ptr pubmsg = mqtt::make_message(TOPIC, payload);
                 pubmsg->set_qos(QOS);
                 client.publish(pubmsg)->wait_for(TIMEOUT);
+		//mqtt::const_message_ptr m_ptr = &mess;
+                //client.publish(m_ptr)->wait_for(TIMEOUT);
 		std::cout << (*m).cam_idx << " " << (*m).t_stamp_ms << " " << (*m).objects.size() << std::endl;
 		}
             catch(const mqtt::exception& exc) {
