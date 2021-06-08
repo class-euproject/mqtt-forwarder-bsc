@@ -1,0 +1,12 @@
+build/
+.vscode/
+.idea/
+
+*.bin
+*.pyc
+*.o
+*~
+
+*.zip
+*.tar.gz
+
