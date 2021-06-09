@@ -61,6 +61,7 @@ namespace fog
                 sendr->send_message(&input_messages.at(i), sendPort);
                 std::cout << "Message sent " << input_messages.at(i).cam_idx << " " << input_messages.at(i).t_stamp_ms << std::endl;
             }
+            sendr->send_message(dummy, sendPort);
             input_messages.clear();
         }
         return (void *)NULL;
