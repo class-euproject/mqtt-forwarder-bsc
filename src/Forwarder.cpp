@@ -47,6 +47,7 @@ namespace fog
         while (true)
         {
             recv->receive_message(socketDesc, sync_message);
+            std::cout << "Request RECEIVED!"<<std::endl;
             input_messages = this->cm->getMessages();
             // std::cout<<"send dim reading list: "<<input_messages.size()<<std::endl;
             if (input_messages.size() == 0)
@@ -54,11 +55,11 @@ namespace fog
                 sendr->send_message(dummy, sendPort);
                 continue; // no received messages
             }
-            
+
             for (int i = 0; i < input_messages.size(); i++)
             {
                 sendr->send_message(&input_messages.at(i), sendPort);
-                std::cout << "Message " << input_messages.at(i).cam_idx << " " << input_messages.at(i).t_stamp_ms << std::endl;
+                std::cout << "Message sent " << input_messages.at(i).cam_idx << " " << input_messages.at(i).t_stamp_ms << std::endl;
             }
             input_messages.clear();
         }
