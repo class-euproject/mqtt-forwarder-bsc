@@ -41,8 +41,10 @@ void * Forwarder::send(void *n) {
             continue;        // no received messages
         }
 
-        for (int i = 0; i < input_messages.size(); i++)
+        for (int i = 0; i < input_messages.size(); i++){
             sendr->send_message(&input_messages.at(i), sendPort);
+	    std::cout << "Message " << input_messages.at(i).cam_idx << " " << input_messages.at(i).t_stamp_ms << std::endl;
+	}
         input_messages.clear();
     }
     return (void *)NULL;

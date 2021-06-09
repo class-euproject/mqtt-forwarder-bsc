@@ -32,6 +32,7 @@ void * Receiver::receive(void *n) {
     while (this->comm->receive_message(this->socketDesc, m) == 0) {
         if((*m).cam_idx == 20 or (*m).cam_idx == 21 or (*m).cam_idx == 30 or (*m).cam_idx == 31 or (*m).cam_idx == 40){
             this->cm->insertMessage(*m);
+	    std::cout << "Message acquired: " << m->cam_idx << " " << m->t_stamp_ms << std::endl;
         }
     }
     delete m;
