@@ -10,7 +10,8 @@ int main(int argc, char **argv) {
     fog::Receiver r(received_messages, 8888);
     fog::Forwarder f(received_messages, 18889, 18888);
     r.start();
-
+    f.start();
+    f.end();
     r.end();
     return EXIT_SUCCESS;
 }
