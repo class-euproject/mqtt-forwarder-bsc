@@ -179,16 +179,16 @@ void * Receiver::receive(void *n) {
     int nStates = 5;
     float dt = 0.03;
     bool trVerbose = false;
-    geodetic_converter::GeodeticConverter *gc;
-    gc->initialiseReference(44.655540, 10.934315, 0);
+    geodetic_converter::GeodeticConverter gc;
+    gc.initialiseReference(44.655540, 10.934315, 0);
     tracking::Tracking *tr = new tracking::Tracking(nStates, dt, initialAge, tracking::UKF_t);
 
     while (this->comm->receive_message(this->socketDesc, m) == 0) {
         if((*m).cam_idx == 20 or (*m).cam_idx == 21 or (*m).cam_idx == 30 or (*m).cam_idx == 31 or (*m).cam_idx == 40){
-            auto tracked_messages = fillTrackerInfo({(*m)}, tr, (*gc), adfGeoTransform);
+            auto tracked_messages = fillTrackerInfo({(*m)}, tr, gc, adfGeoTransform);
             (*m) = tracked_messages.at(0);
             this->cm->insertMessage(*m);
-	        std::cout << "Message acquired: " << m->cam_idx << " " << m->t_stamp_ms << std::endl;
+	        std::cout << "Message acquired: " << m->cam_idx << " " << m->t_stamp_ms << " with "<< m->objects.size() << " objects" <<std::endl;
         }
     }
     delete m;
