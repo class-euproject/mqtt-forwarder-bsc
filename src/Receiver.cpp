@@ -8,7 +8,8 @@
 namespace fog {
 
 Receiver::Receiver(ClassAggregatorMessage &sharedMessage,
-                   int port_) {
+                   int port_,
+                   bool logWriterFlag) {
     port = port_;
     cm = &sharedMessage;
     comm = new Communicator<MasaMessage>(SOCK_DGRAM);
@@ -17,9 +18,15 @@ Receiver::Receiver(ClassAggregatorMessage &sharedMessage,
     socketDesc = comm->get_socket();
     if (socketDesc == -1)
         perror("error in socket");
+
+    lw_flag = logWriterFlag;
+    if (lw_flag){
+        lw = new LogWriter("../log/recived_messages/");
+    }
 }
 
 Receiver::~Receiver() {
+    delete lw;
     delete comm;
 }
 
@@ -188,6 +195,9 @@ void * Receiver::receive(void *n) {
             auto tracked_messages = fillTrackerInfo({(*m)}, tr, gc, adfGeoTransform);
             (*m) = tracked_messages.at(0);
             this->cm->insertMessage(*m);
+            if(this->lw_flag) {
+                this->lw->write(*m);
+            }
 	        std::cout << "Message acquired: " << m->cam_idx << " " << m->t_stamp_ms << " with "<< m->objects.size() << " objects" <<std::endl;
         }
     }

@@ -5,6 +5,7 @@
 #include <sys/socket.h>
 #include <stdio.h>
 #include <thread>
+#include "LogWriter.h"
 #include "ClassAggregatorMessage.h"
 #include "../masa_protocol/include/communicator.hpp"
 
@@ -20,12 +21,15 @@ private:
     int sendPort;
     Communicator<MasaMessage> *sendr;
     Communicator<MasaMessage> *recv;
+    LogWriter *lw;
+    bool lw_flag;
     pthread_t writerThread;
 
 public:
     Forwarder(ClassAggregatorMessage &sharedMessage,
             int recvPort_,
-            int sendPort_);
+            int sendPort_,
+            bool logWriterFlag);
     ~Forwarder();
     void start();
     void end();

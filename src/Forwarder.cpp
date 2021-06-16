@@ -5,7 +5,8 @@ namespace fog
 
     Forwarder::Forwarder(ClassAggregatorMessage &sharedMessage,
                          int recvPort_,
-                         int sendPort_)
+                         int sendPort_,
+                         bool logWriterFlag)
     {
 
         cm = &sharedMessage;
@@ -16,10 +17,16 @@ namespace fog
         recv = new Communicator<MasaMessage>(SOCK_DGRAM);
         recv->open_server_socket(recvPort_);
         socketDesc = recv->get_socket();
+
+        lw_flag = logWriterFlag;
+        if (lw_flag){
+            lw = new LogWriter("../log/sent_messages/");
+        }
     }
 
     Forwarder::~Forwarder()
     {
+        delete lw;
         delete sendr;
         delete recv;
     }
@@ -60,6 +67,9 @@ namespace fog
             {
                 sendr->send_message(&input_messages.at(i), sendPort);
                 std::cout << "Message sent " << input_messages.at(i).cam_idx << " " << input_messages.at(i).t_stamp_ms << std::endl;
+                if(this->lw_flag) {
+                    this->lw->write(input_messages.at(i));
+                }
             }
             sendr->send_message(dummy, sendPort);
             input_messages.clear();
