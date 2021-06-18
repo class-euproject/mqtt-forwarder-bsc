@@ -48,7 +48,7 @@ target_link_libraries(forwarder ${forwarder_LIBS})
 add_executable(forwarder-bsc demo/forwarder_bsc.cpp)
 target_link_libraries(forwarder-bsc forwarder)
 
-#add_executable(consumer demo/consumer.cpp)
-#target_link_libraries(consumer forwarder)
+add_executable(consumer demo/consumer.cpp)
+target_link_libraries(consumer forwarder)
 
 

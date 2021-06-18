@@ -1,132 +1,50 @@
-// sync_consume.cpp
-//
-// This is a Paho MQTT C++ client, sample application.
-//
-// This application is an MQTT consumer/subscriber using the C++ synchronous
-// client interface, which uses the queuing API to receive messages.
-//
-// The sample demonstrates:
-//  - Connecting to an MQTT server/broker
-//  - Using a persistent (non-clean) session
-//  - Subscribing to multiple topics
-//  - Receiving messages through the queueing consumer API
-//  - Recieving and acting upon commands via MQTT topics
-//  - Auto reconnect
-//  - Updating auto-reconnect data
-//
-
-/*******************************************************************************
- * Copyright (c) 2013-2020 Frank Pagliughi <fpagliughi@mindspring.com>
- *
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * and Eclipse Distribution License v1.0 which accompany this distribution.
- *
- * The Eclipse Public License is available at
- *    http://www.eclipse.org/legal/epl-v10.html
- * and the Eclipse Distribution License is available at
- *   http://www.eclipse.org/org/documents/edl-v10.php.
- *
- * Contributors:
- *    Frank Pagliughi - initial implementation and documentation
- *******************************************************************************/
-
 #include <iostream>
-#include <cstdlib>
-#include <string>
-#include <cstring>
-#include <cctype>
+#include <sys/socket.h>
+#include <stdio.h>
 #include <thread>
+#include "../masa_protocol/include/communicator.hpp"
+#include "../masa_protocol/include/messages.hpp"
 #include <chrono>
-#include "mqtt/client.h"
 
 using namespace std;
 using namespace std::chrono;
+using namespace masa;
 
-const string SERVER_ADDRESS	{ "tcp://192.168.7.42:1883" };
-const string CLIENT_ID		{ "consume" };
-
-/////////////////////////////////////////////////////////////////////////////
-
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
-	mqtt::client cli(SERVER_ADDRESS, CLIENT_ID);
+	high_resolution_clock::time_point t1 = high_resolution_clock::now(), t2;
+	t1 = high_resolution_clock::now();
+	
+	Communicator<MasaMessage> *sendr;
+	Communicator<MasaMessage> *recv;
+	int sendPort = 18889;
+	int recvPort = 18888;
+	sendr = new Communicator<MasaMessage>(SOCK_DGRAM);
+	//sendr->open_client_socket("172.17.0.2", sendPort_);
+	sendr->open_client_socket("127.0.0.1", sendPort);
 
-	auto connOpts = mqtt::connect_options_builder()
-		.keep_alive_interval(seconds(30))
-		.clean_session(false)
-		.finalize();
+	recv = new Communicator<MasaMessage>(SOCK_DGRAM);
+	recv->open_server_socket(recvPort);
+	int socketDesc = recv->get_socket();
 
-	// You can install a callback to change some connection data
-	// on auto reconnect attempts. To make a change, update the
-	// `connect_data` and return 'true'.
-	cli.set_update_connection_handler(
-		[](mqtt::connect_data& connData) {
-			string newUserName { "newuser" };
-			if (connData.get_user_name() == newUserName)
-				return false;
+	MasaMessage *sync_message = new MasaMessage;
+	MasaMessage *dummy = new MasaMessage;
+	dummy->objects.clear();
+	dummy->lights.clear();
+	dummy->num_objects = 0;
+	dummy->cam_idx = 0;
 
-			cout << "Previous user: '" << connData.get_user_name()
-				<< "'" << endl;
-			connData.set_user_name(newUserName);
-			cout << "New user name: '" << connData.get_user_name()
-				<< "'" << endl;
-			return true;
-		}
-	);
-
-	const vector<string> TOPICS { "XX" };
-	const vector<int> QOS { 2 };
-
-	try {
-		cout << "Connecting to the MQTT server..." << flush;
-		mqtt::connect_response rsp = cli.connect(connOpts);
-		cout << "OK\n" << endl;
-
-		if (!rsp.is_session_present()) {
-			std::cout << "Subscribing to topics..." << std::flush;
-			cli.subscribe(TOPICS, QOS);
-			std::cout << "OK" << std::endl;
-		}
-		else {
-			cout << "Session already present. Skipping subscribe." << std::endl;
-		}
-
-		// Consume messages
-
-		while (true) {
-			mqtt::const_message_ptr msg;
-			auto bmsg = cli.try_consume_message(&msg);
-
-			if (bmsg) {
-				if (msg->get_topic() == "command" &&
-						msg->to_string() == "exit") {
-					cout << "Exit command received" << endl;
-					break;
-				}
-
-				cout << msg->get_topic() << ": " << msg->to_string() << endl;
-			}
-			else if (!cli.is_connected()) {
-				cout << "Lost connection" << endl;
-				while (!cli.is_connected()) {
-					this_thread::sleep_for(milliseconds(250));
-				}
-				cout << "Re-established connection" << endl;
-			}
-		}
-
-		// Disconnect
-
-		cout << "\nDisconnecting from the MQTT server..." << flush;
-		cli.disconnect();
-		cout << "OK" << endl;
+	sendr->send_message(dummy, sendPort);
+	std::cout << "Request SENT!" << std::endl;
+	while (!recv->receive_message(socketDesc, sync_message))
+	{
+		std::cout << "RECEIVED!" << std::endl;
+		std::cout << "Message sent " << sync_message->cam_idx << " " << sync_message->t_stamp_ms << std::endl;
+		if (sync_message->cam_idx == 0)
+			break;
 	}
-	catch (const mqtt::exception& exc) {
-		cerr << exc.what() << endl;
-		return 1;
-	}
-
- 	return 0;
+	t2 = high_resolution_clock::now();
+	duration<double, std::milli> ms_double = t2 - t1;
+	std::cout << ms_double.count() << " DURATION ms \n"<<flush;
+	return 0;
 }
-

@@ -12,7 +12,8 @@ namespace fog
         cm = &sharedMessage;
         sendPort = sendPort_;
         sendr = new Communicator<MasaMessage>(SOCK_DGRAM);
-        sendr->open_client_socket("172.17.0.2", sendPort_);
+        sendr->open_client_socket("172.17.0.3", sendPort_);
+        //sendr->open_client_socket("127.0.0.1", sendPort_);
 
         recv = new Communicator<MasaMessage>(SOCK_DGRAM);
         recv->open_server_socket(recvPort_);

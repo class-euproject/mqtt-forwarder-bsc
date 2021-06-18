@@ -90,33 +90,63 @@ void ClassAggregatorMessage::insertMessage(MasaMessage m) {
 
 MasaMessage getMessageFromCar(double_buffer& car){
     MasaMessage m;
+    m.cam_idx=0;
+    if (car.selector == 0)
+    {
+        if(car.messageList2.size() > 0){
+            m = car.messageList2.at(0);
+            car.messageList2.clear();
+            return m;
+        }
+    }
+    else
+    {
+        if(car.messageList1.size() > 0){
+            m = car.messageList1.at(0);
+            car.messageList1.clear();
+            return m;
+        }
+    }
+    return m;
+    /*
     bool got_message = false;
     while(!got_message){
         if(pthread_mutex_trylock(&car.mutex1) > 0){
             if(car.messageList1.size() > 0){
                 m = car.messageList1.at(0);
                 car.messageList1.clear();
+                got_message = true;
             }
             pthread_mutex_unlock(&car.mutex1);
             return m;
         } else if(pthread_mutex_trylock(&car.mutex2) > 0){
             if(car.messageList2.size() > 0){
                 m = car.messageList2.at(0);
-                car.messageList1.clear();
+                car.messageList2.clear();
+                got_message = true;
             }
             pthread_mutex_unlock(&car.mutex2);
             return m;
         }
     }
-    
+    */
 }
 
 std::vector<MasaMessage> ClassAggregatorMessage::getMessages() {
 
     std::vector<MasaMessage> copy_list;
-    copy_list.push_back(getMessageFromCar(car1));
-    copy_list.push_back(getMessageFromCar(car2));
-    copy_list.push_back(getMessageFromCar(car3));
+    MasaMessage m = getMessageFromCar(car1);
+    if (m.cam_idx != 0)
+        copy_list.push_back(m);
+    m = getMessageFromCar(car2);
+    if (m.cam_idx != 0)
+        copy_list.push_back(m);
+    m = getMessageFromCar(car3);
+    if (m.cam_idx != 0)
+        copy_list.push_back(m);
+
+//    copy_list.push_back(getMessageFromCar(car2));
+//    copy_list.push_back(getMessageFromCar(car3));
 
     return copy_list;
 
