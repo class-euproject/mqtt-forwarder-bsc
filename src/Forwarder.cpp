@@ -1,5 +1,8 @@
 #include "Forwarder.h"
 
+#include <chrono>
+using namespace std::chrono;
+
 namespace fog
 {
 
@@ -12,8 +15,8 @@ namespace fog
         cm = &sharedMessage;
         sendPort = sendPort_;
         sendr = new Communicator<MasaMessage>(SOCK_DGRAM);
-        sendr->open_client_socket("172.17.0.3", sendPort_);
-        //sendr->open_client_socket("127.0.0.1", sendPort_);
+        //sendr->open_client_socket("172.17.0.3", sendPort_);
+        sendr->open_client_socket("127.0.0.1", sendPort_);
 
         recv = new Communicator<MasaMessage>(SOCK_DGRAM);
         recv->open_server_socket(recvPort_);
@@ -56,6 +59,9 @@ namespace fog
         {
             recv->receive_message(socketDesc, sync_message);
             std::cout << "Request RECEIVED!"<<std::endl;
+            high_resolution_clock::time_point t1 = high_resolution_clock::now(), t2;
+	        t1 = high_resolution_clock::now();
+	            
             input_messages = this->cm->getMessages();
             // std::cout<<"send dim reading list: "<<input_messages.size()<<std::endl;
             if (input_messages.size() == 0)
@@ -74,6 +80,9 @@ namespace fog
             }
             sendr->send_message(dummy, sendPort);
             input_messages.clear();
+            t2 = high_resolution_clock::now();
+	        duration<double, std::milli> ms_double = t2 - t1;
+            std::cout << ms_double.count() << " DURATION ms \n"<<std::flush;
         }
         return (void *)NULL;
     }
