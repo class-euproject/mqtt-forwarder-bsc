@@ -15,6 +15,7 @@ Receiver::Receiver(ClassAggregatorMessage &sharedMessage,
     cm = &sharedMessage;
     comm = new Communicator<MasaMessage>(SOCK_DGRAM);
 
+    std::cout << "Creating a reciver to port " << port << std::endl;
     comm->open_server_socket(port);
     socketDesc = comm->get_socket();
     if (socketDesc == -1)
